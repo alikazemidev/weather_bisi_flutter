@@ -127,6 +127,34 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ],
+                ),
+                SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  height: 1,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  height: 100,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: 10,
+                    scrollDirection: Axis.horizontal,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          children: [
+                            Text('Fri 8PM'),
+                            Icon(Icons.cloud, color: Colors.white),
+                            Text('14 \u00b0')
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 )
               ],
             ),
