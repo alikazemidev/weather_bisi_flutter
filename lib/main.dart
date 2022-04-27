@@ -224,6 +224,10 @@ class _HomePageState extends State<HomePage> {
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: TextField(
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black,
+                                    ),
                                     controller: cityNameCotroller,
                                     decoration: InputDecoration(
                                       contentPadding: EdgeInsets.all(10),
@@ -243,7 +247,12 @@ class _HomePageState extends State<HomePage> {
                                   primary: Colors.green,
                                   shape: CircleBorder(),
                                 ),
-                                onPressed: () {},
+                                onPressed: () {
+                                  setState(() {
+                                    futureweather = sendRequestCurrentWeather(
+                                        cityNameCotroller.text);
+                                  });
+                                },
                                 child: Text(
                                   'Find',
                                   style: TextStyle(
@@ -526,3 +535,4 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+// *TODO : fix bug=> if city Name not found
