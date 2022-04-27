@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:progress_indicators/progress_indicators.dart';
+import 'package:weather_bisi_flutter/models/7days_weather.dart';
 import 'package:weather_bisi_flutter/models/weather.dart';
 
 void main() {
@@ -47,9 +49,60 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Future<Weather>? futureweather;
+  StreamController<List<DaysWeather>>? StreamWeather;
 
   TextEditingController cityNameCotroller = TextEditingController();
   var cityName = 'tehran';
+  var lat;
+  var long;
+
+  void sendRequest7DaysWeather(lat, long) async {
+    List<DaysWeather> list = [];
+    var apiKey = 'c81a25b60360ffd19ce90d5a4b7bff53';
+
+    try {
+      var response = await Dio().get(
+        'https://api.openweathermap.org/data/2.5/onecall',
+        queryParameters: {
+          'lat': lat,
+          'lon': long,
+          'exclude': 'minutely,hourly',
+          'appid': apiKey,
+          'units': 'metric',
+        },
+      );
+      final formatter = DateFormat.MMMd();
+
+      for (int i = 0; i < 8; i++) {
+        var model = response.data['daily'][i];
+        var dt = formatter.format(
+          DateTime.fromMillisecondsSinceEpoch(
+            model['dt'] * 1000,
+            isUtc: false,
+          ),
+        );
+
+        DaysWeather daysWeather = DaysWeather(
+          dataTime: dt,
+          temp: model['temp']['day'],
+          description: model['weather'][0]['description'],
+          main: model['weather'][0]['main'],
+        );
+
+        list.add(daysWeather);
+      }
+
+      StreamWeather!.add(list);
+    } on DioError catch (e) {
+      print(e.response!.statusCode);
+      print(e.message);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('there is an error'),
+        ),
+      );
+    }
+  }
 
   Future<Weather> sendRequestCurrentWeather(String cityName) async {
     var apiKey = 'c81a25b60360ffd19ce90d5a4b7bff53';
@@ -61,6 +114,9 @@ class _HomePageState extends State<HomePage> {
         'units': 'metric',
       },
     );
+
+    lat = response.data["coord"]["lat"];
+    long = response.data["coord"]["lon"];
 
     print(response.statusCode);
 
@@ -110,6 +166,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     futureweather = sendRequestCurrentWeather(cityName);
+    StreamWeather = StreamController<List<DaysWeather>>();
   }
 
   @override
