@@ -49,7 +49,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Future<Weather>? futureweather;
-  StreamController<List<DaysWeather>>? StreamWeather;
+  StreamController<List<DaysWeather>>? streamWeather;
 
   TextEditingController cityNameCotroller = TextEditingController();
   var cityName = 'tehran';
@@ -92,7 +92,7 @@ class _HomePageState extends State<HomePage> {
         list.add(daysWeather);
       }
 
-      StreamWeather!.add(list);
+      streamWeather!.add(list);
     } on DioError catch (e) {
       print(e.response!.statusCode);
       print(e.message);
@@ -166,7 +166,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     futureweather = sendRequestCurrentWeather(cityName);
-    StreamWeather = StreamController<List<DaysWeather>>();
+    streamWeather = StreamController<List<DaysWeather>>();
   }
 
   @override
@@ -179,6 +179,7 @@ class _HomePageState extends State<HomePage> {
           future: futureweather,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
+              sendRequest7DaysWeather(lat, long);
               final formatter = DateFormat.jm();
               var sunrise = formatter.format(
                 new DateTime.fromMillisecondsSinceEpoch(
@@ -348,29 +349,30 @@ class _HomePageState extends State<HomePage> {
                         Container(
                           width: double.infinity,
                           height: 120,
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: 10,
-                            scrollDirection: Axis.horizontal,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      'Fri 8PM',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    SizedBox(height: 5),
-                                    Icon(Icons.cloud, color: Colors.white),
-                                    SizedBox(height: 5),
-                                    Text('14 \u00b0')
-                                  ],
-                                ),
-                              );
+                          child: StreamBuilder<List<DaysWeather>>(
+                            stream: streamWeather!.stream,
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                List<DaysWeather>? daysWeather = snapshot.data;
+                                return ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: daysWeather!.length - 1,
+                                  scrollDirection: Axis.horizontal,
+                                  itemBuilder: (context, index) {
+                                    return listViewItem(
+                                      daysWeather[index + 1],
+                                    );
+                                  },
+                                );
+                              } else {
+                                return Center(
+                                  child: JumpingDotsProgressIndicator(
+                                    color: Colors.black,
+                                    fontSize: 60,
+                                    dotSpacing: 2,
+                                  ),
+                                );
+                              }
                             },
                           ),
                         ),
@@ -382,7 +384,7 @@ class _HomePageState extends State<HomePage> {
                         SizedBox(height: 10),
                         // * extera info weather row
                         Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(20.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
@@ -499,6 +501,27 @@ class _HomePageState extends State<HomePage> {
             }
           },
         ),
+      ),
+    );
+  }
+
+  Padding listViewItem(DaysWeather item) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        children: [
+          Text(
+            item.dataTime,
+            style: TextStyle(
+              fontSize: 20,
+              color: Colors.grey,
+            ),
+          ),
+          SizedBox(height: 5),
+          Expanded(child: setIconForMain(item)),
+          SizedBox(height: 5),
+          Text(item.temp.round().toString()),
+        ],
       ),
     );
   }
